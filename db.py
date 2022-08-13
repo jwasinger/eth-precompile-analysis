@@ -28,19 +28,22 @@ class DB():
         return db
 
     def createCallTable(self):
-        self.cursor.execute('CREATE TABLE CALLS(to TEXT, from TEXT, input TEXT, gasUsed TEXT)')
+        self.cursor.execute('CREATE TABLE calls (recipient TEXT, sender TEXT, input TEXT, gasUsed TEXT)')
+        self.connection.commit()
 
     def createHeadBlockTable(self):
-        self.cursor.execute('CREATE TABLE HEADBLOCK(id TEXT NOT NULL, number TEXT NOT NULL, PRIMARY KEY (id) )')
+        self.cursor.execute('CREATE TABLE headblock (id TEXT NOT NULL, number TEXT NOT NULL, PRIMARY KEY (id) )')
+        self.connection.commit()
 
     def SetHeadBlockNumber(self, number: int):
         self.head_number = number
-        self.cursor.execute('INSERT INTO HEADBLOCK ("headblock", {})'.format(number))
+        self.cursor.execute('REPLACE INTO headblock (id, number) values ("headblock", "{}")'.format(number))
+        self.connection.commit()
         # TODO self.cursor.execute('....')
 
     def HeadBlockNumber(self):
-        result = self.cursor.execute('SELECT * from HEADBLOCK')
-        import pdb; pdb.set_trace()
+        result = self.cursor.execute('SELECT * FROM headblock').fetchall()
+        return int(result[0][1])
 
     def SetPrecompileCall(self, block_number: int, tx_hash: str, to: str, input_data: str, result: str, gas_used: int):
         pass

@@ -38,7 +38,7 @@ class EthRPCClient:
         result = json.loads(result)
         return result['result']
 
-    async def ethGetBlockByNumber(self, block: int):
+    async def eth_getBlockByNumber(self, block: int):
         block_num_hex = hex(block)
         payload = {
             'method': 'eth_getBlockByNumber',
