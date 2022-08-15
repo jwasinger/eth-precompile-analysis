@@ -17,7 +17,7 @@ PRECOMPILED_ADDRS = {
     '0x0000000000000000000000000000000000000006', # bn256 add
     '0x0000000000000000000000000000000000000007', # bn256 scalar mul
     '0x0000000000000000000000000000000000000008', # bn256 pairing
-    # TODO more
+    '0x0000000000000000000000000000000000000009', # blake2f
 }
 
 async def has_txs(rpc, block_num):
@@ -49,7 +49,7 @@ async def find_precompile_calls(rpc, block_num):
             continue
 
         for idx, call in enumerate(result['calls']):
-            if call['to'] in PRECOMPILED_ADDRS:
+            if 'to' in call and call['to'] in PRECOMPILED_ADDRS:
                 precompile_call = PrecompileCall(
                     call['to'],
                     call['from'],
@@ -57,7 +57,8 @@ async def find_precompile_calls(rpc, block_num):
                     call['output'],
                     call['gasUsed'],
                     tx_hash,
-                    idx)
+                    idx,
+                    call['type'])
                 calls.append(precompile_call)
 
     return calls

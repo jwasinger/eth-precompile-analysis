@@ -23,14 +23,14 @@ class DB():
             print("creating new db")
             db.createHeadBlockTable()
             db.createCallTable()
-            db.SetHeadBlockNumber(49000)
+            db.SetHeadBlockNumber(49000) # no precompile calls happen until a bit after 49000
         else:
             print("opened existing db")
 
         return db
 
     def createCallTable(self):
-        self.cursor.execute('CREATE TABLE calls (blockNumber INTEGER, txHash TEXT, txIndex INTEGER, recipient TEXT, sender TEXT, input TEXT, output TEXT, gasUsed INTEGER, PRIMARY KEY (blockNumber, txHash, txIndex))')
+        self.cursor.execute('CREATE TABLE calls (blockNumber INTEGER, txHash TEXT, txIndex INTEGER, recipient TEXT, sender TEXT, input TEXT, output TEXT, gasUsed INTEGER, callType TEXT, PRIMARY KEY (blockNumber, txHash, txIndex))')
         self.connection.commit()
 
     def createHeadBlockTable(self):
@@ -48,7 +48,7 @@ class DB():
 
     def AddPrecompileCalls(self, block_number: int, precompiles_calls: [PrecompileCall]):
         for call in precompiles_calls:
-            query = 'INSERT INTO calls VALUES ({}, "{}", {}, "{}", "{}", "{}", "{}", {})'.format(
+            query = 'INSERT INTO calls VALUES ({}, "{}", {}, "{}", "{}", "{}", "{}", {}, "{}")'.format(
                 block_number,
                 call.tx_hash,
                 call.idx,
@@ -56,5 +56,6 @@ class DB():
                 call.sender,
                 call.input_data,
                 call.output_data,
-                int(call.gas_used, 16))
+                int(call.gas_used, 16),
+                call.call_type)
             self.cursor.execute(query)
