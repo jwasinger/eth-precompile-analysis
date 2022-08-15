@@ -1,9 +1,10 @@
-from db import DB
-
 from eth_jsonrpc_ws import EthRPCClient
 import sqlite3
 import asyncio
 import json
+
+from db import DB
+from common import PrecompileCall
 
 WS_RPC_URL='ws://localhost:8546'
 
@@ -49,15 +50,15 @@ async def find_precompile_calls(rpc, block_num):
 
         for idx, call in enumerate(result['calls']):
             if call['to'] in PRECOMPILED_ADDRS:
-                calls.append({
-                    'to': call['to'],
-                    'from': call['from'],
-                    'input': call['input'],
-                    'output': call['output'],
-                    'gasUsed': call['gasUsed'],
-                    'tx_hash': tx_hash,
-                    'idx': idx,
-                })
+                precompile_call = PrecompileCall(
+                    call['to'],
+                    call['from'],
+                    call['input'],
+                    call['output'],
+                    call['gasUsed'],
+                    tx_hash,
+                    idx)
+                calls.append(precompile_call)
 
     return calls
 

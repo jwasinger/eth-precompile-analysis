@@ -41,15 +41,14 @@ class DB():
         self.head_number = number
         self.cursor.execute('REPLACE INTO headblock (id, number) values ("headblock", "{}")'.format(number))
         self.connection.commit()
-        # TODO self.cursor.execute('....')
 
     def HeadBlockNumber(self):
         result = self.cursor.execute('SELECT * FROM headblock').fetchall()
         return int(result[0][1])
 
     def AddPrecompileCalls(self, block_number: int, precompiles_calls: [PrecompileCall]):
-        for call in precompile_calls:
-            self.cursor.execute("INSERT INTO calls ({}, {}, {}, {}, {}, {}, {}, {}, {})".format(
+        for call in precompiles_calls:
+            query = 'INSERT INTO calls VALUES ({}, "{}", {}, "{}", "{}", "{}", "{}", {})'.format(
                 block_number,
                 call.tx_hash,
                 call.idx,
@@ -57,5 +56,5 @@ class DB():
                 call.sender,
                 call.input_data,
                 call.output_data,
-                call.gas_used))
-        self.connection.commit()
+                int(call.gas_used, 16))
+            self.cursor.execute(query)

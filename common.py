@@ -1,5 +1,5 @@
 class PrecompileCall():
-    def __self__(recipient: str, sender: str, input_data: str, output_data: str, gas_used: int, tx_hash: str, idx: int):
+    def __init__(self, recipient: str, sender: str, input_data: str, output_data: str, gas_used: int, tx_hash: str, idx: int):
         self.recipient = recipient
         self.sender = sender
         self.input_data = input_data
