@@ -21,14 +21,14 @@ class DB():
             print("creating new db")
             db.createHeadBlockTable()
             db.createCallTable()
-            db.SetHeadBlockNumber(0)
+            db.SetHeadBlockNumber(49000)
         else:
             print("opened existing db")
 
         return db
 
     def createCallTable(self):
-        self.cursor.execute('CREATE TABLE calls (recipient TEXT, sender TEXT, input TEXT, gasUsed TEXT)')
+        self.cursor.execute('CREATE TABLE calls (blockNumber TEXT, txHash TEXT, txIndex TEXT, recipient TEXT, sender TEXT, input TEXT, output TEXT, gasUsed TEXT, PRIMARY KEY (blockNumber, txHash, txIndex))')
         self.connection.commit()
 
     def createHeadBlockTable(self):
@@ -45,5 +45,5 @@ class DB():
         result = self.cursor.execute('SELECT * FROM headblock').fetchall()
         return int(result[0][1])
 
-    def SetPrecompileCall(self, block_number: int, tx_hash: str, to: str, input_data: str, result: str, gas_used: int):
+    def AddPrecompileCalls(self, block_number: int, precompiles_calls):
         pass

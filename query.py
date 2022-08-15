@@ -3,8 +3,20 @@ from db import DB
 from eth_jsonrpc_ws import EthRPCClient
 import sqlite3
 import asyncio
+import json
 
 WS_RPC_URL='ws://localhost:8546'
+
+PRECOMPILED_ADDRS = {
+    '0x0000000000000000000000000000000000000001', # ecrecover
+    '0x0000000000000000000000000000000000000002', # sha256
+    '0x0000000000000000000000000000000000000003', # ripemd
+    '0x0000000000000000000000000000000000000004', # data copy (identity)
+    '0x0000000000000000000000000000000000000005', # modexp
+    '0x0000000000000000000000000000000000000006', # bn256 add
+    '0x0000000000000000000000000000000000000007', # bn256 scalar mul
+    '0x0000000000000000000000000000000000000008', # bn256 pairing
+}
 
 async def has_txs(rpc, block_num):
     block = await rpc.eth_getBlockByNumber(block_num)
@@ -14,21 +26,39 @@ def parse_trace(trace_files: [str]):
     for trace_file in trace_files:
         with open(trace_file) as f:
             for line in f:
-                # if it is a 'result' line, it is the end of a transaction
-                # flush the current-tx results
+                line = json.loads(line)
+                if 'output' in line:
+                    # it is the end of a transaction
+                    # TODO flush the current-tx results
+                    pass
+                else:
+                    # else it's a trace step for a transaction
+                    import pdb; pdb.set_trace()
 
-                # else it's a trace step for a transaction
-    pass
+    # TODO assert the last processed line was an "end of transaction"
 
 async def find_precompile_calls(rpc, block_num):
+    calls = []
     block = await rpc.eth_getBlockByNumber(block_num)
-    trace_files = await rpc.debug_standardTraceBlockToFile(block['hash'])
-    for file_name in trace_files:
-        print(file_name)
-        with open(file_name) as f:
-            lines = f.readlines()
-            if len(lines) > 1:
-                print(lines)
+    for tx_hash in block['transactions']:
+        result = await rpc.debug_traceTransaction(tx_hash)
+
+        if not 'calls' in result:
+            continue
+
+        for idx, call in enumerate(result['calls']):
+            if call['to'] in PRECOMPILED_ADDRS:
+                calls.append({
+                    'to': call['to'],
+                    'from': call['from'],
+                    'input': call['input'],
+                    'output': call['output'],
+                    'gasUsed': call['gasUsed'],
+                    'tx_hash': tx_hash,
+                    'idx': idx,
+                })
+
+    return calls
 
 async def run_collection():
     rpc = EthRPCClient(WS_RPC_URL)
@@ -48,7 +78,9 @@ async def run_collection():
                 print(block_num)
                 should_examine = await has_txs(rpc, block_num)
                 if should_examine:
-                    await find_precompile_calls(rpc, block_num)
+                    precompile_calls = await find_precompile_calls(rpc, block_num)
+                    if len(precompile_calls) > 0:
+                        db.AddPrecompileCalls(block_num, precompile_calls)
 
                 db.SetHeadBlockNumber(block_num)
             # for each block number in range(local_head + 1, remote_head + 1):

@@ -12,10 +12,10 @@ class EthRPCClient:
     async def __aexit__(self, exc_type, exc, tb):
         await self.websocket.close()
 
-    async def debug_standardTraceBlockToFile(self, block_hash: str):
+    async def debug_traceTransaction(self, block_hash: str):
         payload = {
-            'method': 'debug_standardTraceBlockToFile',
-            'params': [block_hash],
+            'method': 'debug_traceTransaction',
+            'params': [block_hash, {'tracer': 'callTracer', 'timeout': '500s'}],
             'jsonrpc': '2.0',
             "id": 0,
         }
