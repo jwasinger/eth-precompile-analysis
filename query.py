@@ -6,6 +6,9 @@ import json
 from db import DB
 from common import PrecompileCall
 
+import sys
+sys.setrecursionlimit(4000)
+
 WS_RPC_URL='ws://localhost:8546'
 
 PRECOMPILED_ADDRS = {
@@ -50,11 +53,19 @@ async def find_precompile_calls(rpc, block_num):
 
         for idx, call in enumerate(result['calls']):
             if 'to' in call and call['to'] in PRECOMPILED_ADDRS:
+                call_input = ''
+                call_output = ''
+
+                # only record input/output for modexp
+                if call['to'] == '0x0000000000000000000000000000000000000005':
+                    call_input = call['input']
+                    call_output = call['output']
+
                 precompile_call = PrecompileCall(
                     call['to'],
                     call['from'],
-                    call['input'],
-                    call['output'],
+                    call_input,
+                    call_output,
                     call['gasUsed'],
                     tx_hash,
                     idx,
