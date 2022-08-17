@@ -27,50 +27,36 @@ async def has_txs(rpc, block_num):
     block = await rpc.eth_getBlockByNumber(block_num)
     return len(block['transactions']) > 0
 
-def parse_trace(trace_files: [str]):
-    for trace_file in trace_files:
-        with open(trace_file) as f:
-            for line in f:
-                line = json.loads(line)
-                if 'output' in line:
-                    # it is the end of a transaction
-                    # TODO flush the current-tx results
-                    pass
-                else:
-                    # else it's a trace step for a transaction
-                    import pdb; pdb.set_trace()
-
-    # TODO assert the last processed line was an "end of transaction"
-
 async def find_precompile_calls(rpc, block_num):
     calls = []
     block = await rpc.eth_getBlockByNumber(block_num)
     for tx_hash in block['transactions']:
         result = await rpc.debug_traceTransaction(tx_hash)
 
-        if not 'calls' in result:
-            continue
+        if len(result) > 0:
+            print("precompiles!")
 
-        for idx, call in enumerate(result['calls']):
-            if 'to' in call and call['to'] in PRECOMPILED_ADDRS:
-                call_input = ''
-                call_output = ''
+        for idx, call in enumerate(result):
+            assert 'to' in call and call['to'] in PRECOMPILED_ADDRS
 
-                # only record input/output for modexp
-                if call['to'] == '0x0000000000000000000000000000000000000005':
-                    call_input = call['input']
-                    call_output = call['output']
+            call_input = ''
+            call_output = ''
 
-                precompile_call = PrecompileCall(
-                    call['to'],
-                    call['from'],
-                    call_input,
-                    call_output,
-                    call['gasUsed'],
-                    tx_hash,
-                    idx,
-                    call['type'])
-                calls.append(precompile_call)
+            # only record input/output for modexp
+            if call['to'] == '0x0000000000000000000000000000000000000005':
+                call_input = call['input']
+                call_output = call['output']
+
+            precompile_call = PrecompileCall(
+                call['to'],
+                call['from'],
+                call_input,
+                call_output,
+                call['gasUsed'],
+                tx_hash,
+                idx,
+                call['type'])
+            calls.append(precompile_call)
 
     return calls
 

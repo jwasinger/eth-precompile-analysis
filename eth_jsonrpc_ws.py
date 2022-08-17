@@ -15,7 +15,7 @@ class EthRPCClient:
     async def debug_traceTransaction(self, block_hash: str):
         payload = {
             'method': 'debug_traceTransaction',
-            'params': [block_hash, {'tracer': 'callTracer', 'timeout': '500s'}],
+            'params': [block_hash, {'tracer': 'precompilesTracer', 'timeout': '500s'}],
             'jsonrpc': '2.0',
             "id": 0,
         }
