@@ -30,14 +30,24 @@ select distinct substr(input, 0, 195) as `num` from calls where recipient="0x000
 def breakdown_exponent(cursor):
     pass
 
-# check whether all inputs have equal base and modulus size
-def check_equal_base_and_mod_size(cursor):
+def get_distinct_modexp_input_sizes(cursor):
     res = cursor.execute(distinct_modexp_input_size_query)
     input_sizes = res.fetchall()
     input_sizes = [x[0][2:] for x in input_sizes]
+
+    result = []
+
     for input_size in input_sizes:
-        if input_size[0:64] != input_size[128:192]:
-            print("not equal size")
+        result.append((int(input_size[0:64], 16), int(input_size[64:128], 16), int(input_size[128:192], 16), input_size))
+
+    return result
+    
+# check whether all inputs have equal base and modulus size
+def check_equal_base_and_mod_size(cursor):
+    input_sizes = get_distinct_modexp_input_sizes(cursor)
+    for inp in input_sizes:
+        if inp[0] != inp[2]:
+            print("unequal base/mod size")
 
 import sqlite3
 conn = sqlite3.connect("precompiles.db")
@@ -56,3 +66,6 @@ check_equal_base_and_mod_size(cursor)
 
 print("checking base and mod size are equal for all inputs")
 check_equal_base_and_mod_size(cursor)
+
+# get counts of different exponents used per input size grouped by contract
+input_sizes = get_distinct_modexp_input_sizes(cursor)
