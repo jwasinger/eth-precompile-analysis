@@ -23,7 +23,7 @@ class DB():
             print("creating new db")
             db.createHeadBlockTable()
             db.createCallTable()
-            db.SetHeadBlockNumber(49000) # no precompile calls happen until a bit after 49000
+            db.SetHeadBlockNumber(0)
         else:
             print("opened existing db")
 
@@ -59,3 +59,8 @@ class DB():
                 int(call.gas_used, 16),
                 call.call_type)
             self.cursor.execute(query)
+
+    def CreateModexpStatsTable(self):
+        pass
+    def InsertModexpStat():
+        pass

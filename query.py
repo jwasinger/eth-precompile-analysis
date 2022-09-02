@@ -9,6 +9,8 @@ from common import PrecompileCall
 import sys
 sys.setrecursionlimit(4000)
 
+import time
+
 WS_RPC_URL='ws://localhost:8546'
 
 PRECOMPILED_ADDRS = {
@@ -32,9 +34,14 @@ async def find_precompile_calls(rpc, block_num):
     block = await rpc.eth_getBlockByNumber(block_num)
     for tx_hash in block['transactions']:
         result = await rpc.debug_traceTransaction(tx_hash)
+        if result == 'bad':
+            import pdb; pdb.set_trace()
+            result2 = await rpc.debug_traceTransaction(tx_hash)
 
         if len(result) > 0:
             print("precompiles!")
+        else:
+            continue
 
         for idx, call in enumerate(result):
             assert 'to' in call and call['to'] in PRECOMPILED_ADDRS
@@ -64,13 +71,22 @@ async def run_collection():
     rpc = EthRPCClient(WS_RPC_URL)
     async with rpc:
         db = DB.create_or_new()
+        local_head = db.HeadBlockNumber()
+        if local_head == 0:
+            remote_head = int(await rpc.eth_blockNumber(), 16)
+            local_head = remote_head - 5
+            db.SetHeadBlockNumber(local_head)
 
         while True:
-            remote_head = int(await rpc.eth_blockNumber(), 16)
+            remote_head = int(await rpc.eth_blockNumber(), 16) - 5
             local_head = db.HeadBlockNumber()
             if remote_head < local_head:
                 print("local head block number {} greater than remote block number {}. nothing to collect")
                 return
+            elif remote_head == local_head:
+                print("up to date with node. sleeping 10s...")
+                time.sleep(10)
+                continue
 
             print("doing collection")
 

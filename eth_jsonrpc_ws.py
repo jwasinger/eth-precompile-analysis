@@ -15,7 +15,7 @@ class EthRPCClient:
     async def debug_traceTransaction(self, block_hash: str):
         payload = {
             'method': 'debug_traceTransaction',
-            'params': [block_hash, {'tracer': 'precompilesTracer', 'timeout': '500s'}],
+            'params': [block_hash, {'tracer': 'precompiles', 'timeout': '500s'}],
             'jsonrpc': '2.0',
             "id": 0,
         }
@@ -23,6 +23,14 @@ class EthRPCClient:
         await self.websocket.send(json.dumps(payload))
         result = await self.websocket.recv()
         result = json.loads(result)
+        if not 'result' in result:
+            return "bad"
+
+        if 'result' in result and len(result['result']) > 0:
+            for item in result['result']:
+                if item['to'] == '0x0000000000000000000000000000000000000005':
+                    print("modexp")
+                    print(item)
         return result['result']
 
     async def eth_blockNumber(self):
